@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: postgres
+    environment:
+      POSTGRES_DB: qTimTestDb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5432:5432'
+    networks:
+      - programs
+
+  program:
+    container_name: program
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+    networks:
+      - programs
+
+  pgweb:
+    image: 'sosedoff/pgweb'
+    restart: always
+    ports:
+      - '8085:8085'
+    environment:
+      - PGWEB_DATABASE_URL=postgres://user:password@postgres:5432/qTimTestDb?sslmode=disable
+    networks:
+      - programs
+  redis:
+    image: 'redis:7.0.4-bullseye'
+    ports:
+      - '6379:6379'
+    networks:
+      - programs
+
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: wolmi/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - 8081:8081
+networks:
+  programs:
